@@ -31,6 +31,7 @@ namespace modules {
        * \brief Workspace with urgency hint set
        */
       URGENT,
+      PREVIOUS,
     };
 
     struct workspace {
@@ -91,6 +92,9 @@ namespace modules {
     bool m_fuzzy_match{false};
 
     unique_ptr<i3_util::connection_t> m_ipc;
+
+    std::string m_previous_ws;
+    std::string m_current_ws;
   };
 }
 

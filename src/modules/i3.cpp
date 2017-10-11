@@ -46,6 +46,8 @@ namespace modules {
           make_pair(state::VISIBLE, load_optional_label(m_conf, name(), "label-visible", DEFAULT_WS_LABEL)));
       m_statelabels.insert(
           make_pair(state::URGENT, load_optional_label(m_conf, name(), "label-urgent", DEFAULT_WS_LABEL)));
+      m_statelabels.insert(
+          make_pair(state::PREVIOUS, load_optional_label(m_conf, name(), "label-previous", DEFAULT_WS_LABEL)));
     }
 
     if (m_formatter->has(TAG_LABEL_MODE)) {
@@ -74,6 +76,14 @@ namespace modules {
           }
         };
       }
+      m_ipc->on_workspace_event = [this](const i3ipc::workspace_event_t& event) {
+        if (!event.current || (m_pinworkspaces && event.current->output != m_bar.monitor->name))
+          return;
+        m_previous_ws = m_current_ws;
+        m_current_ws = event.current->name;
+        m_log.err("Switched from '%s' to '%s'", m_previous_ws.c_str(),
+                   m_current_ws.c_str());
+      };
       m_ipc->subscribe(i3ipc::ET_WORKSPACE | i3ipc::ET_MODE);
     } catch (const exception& err) {
       throw module_error(err.what());
@@ -139,6 +149,8 @@ namespace modules {
           ws_state = state::URGENT;
         } else if (ws->visible) {
           ws_state = state::VISIBLE;
+        } else if (ws->name == m_previous_ws) {
+          ws_state = state::PREVIOUS;
         } else {
           ws_state = state::UNFOCUSED;
         }
